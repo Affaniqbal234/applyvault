@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" width="120" alt="ApplyVault" />
+  <img src="assets/logo.svg" width="110" alt="ApplyVault" />
 </p>
 
 <h1 align="center">ApplyVault</h1>
@@ -7,17 +7,18 @@
 <p align="center">A job application tracker built to stop losing track of where you applied.</p>
 
 <p align="center">
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10+-blue" alt="Python"></a>
-  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-0.115-green" alt="FastAPI"></a>
-  <a href="https://github.com/yourusername/applyvault"><img src="https://img.shields.io/badge/github-repo-blue?logo=github" alt="GitHub"></a>
-  <a href="https://github.com/yourusername/applyvault/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green" alt="License"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10+-3776ab?logo=python&logoColor=white" alt="Python"></a>
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white" alt="FastAPI"></a>
+  <img src="https://img.shields.io/badge/JavaScript-ES6+-f7df1e?logo=javascript&logoColor=black" alt="JavaScript">
+  <img src="https://img.shields.io/badge/HTML5-orange?logo=html5&logoColor=white" alt="HTML5">
+  <img src="https://img.shields.io/badge/CSS3-blue?logo=css3&logoColor=white" alt="CSS3">
+  <a href="https://github.com/Affaniqbal234/applyvault"><img src="https://img.shields.io/badge/github-repo-181717?logo=github" alt="GitHub"></a>
+  <a href="https://github.com/Affaniqbal234/applyvault/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green" alt="License"></a>
 </p>
 
 <br/>
 
-> **Live demo:** [applyvault.up.railway.app](https://applyvault.up.railway.app) — replace with your actual URL after deploying
-
-![dashboard](assets/screenshot.png)
+> **Live demo:** coming soon — deploying to Render
 
 ---
 
@@ -44,7 +45,7 @@ Requires Python 3.10+ and PostgreSQL.
 
 **1. Clone the repo**
 ```bash
-git clone https://github.com/yourusername/applyvault.git
+git clone https://github.com/Affaniqbal234/applyvault.git
 cd applyvault
 ```
 
@@ -83,7 +84,7 @@ JWT_SECRET=some-long-random-string
 FRONTEND_ORIGIN=http://localhost:5500
 ```
 
-> `postgres` is the default PostgreSQL username. The password is what you set when installing PostgreSQL. Create the database first with `createdb applyvault` or through pgAdmin.
+> `postgres` is the default PostgreSQL username — created automatically when PostgreSQL is installed. The password is what you set during installation. Create the database first with `createdb applyvault` or through pgAdmin.
 
 **5. Start the API**
 ```bash
@@ -101,7 +102,7 @@ python -m http.server 5500
 
 Then open `http://localhost:5500/index.html` in your browser.
 
-> If you're using VS Code, right-click `index.html` and choose "Open with Live Server" instead.
+> If you're using VS Code, right-click `index.html` → "Open with Live Server" instead.
 
 ---
 
@@ -118,6 +119,7 @@ pytest tests/ -v
 
 ## What I'd add with more time
 
+- Deploy with a live URL
 - Email nudges for applications sitting in "Applied" for 2+ weeks
 - CSV export
 - Dark/light theme toggle

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ApplyVault — Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="dashboard-page">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-brand-icon">⬡</span>
+      ApplyVault
+    </div>
+    <div class="topbar-actions">
+      <span class="user-email" id="user-email"></span>
+      <button class="btn btn-ghost btn-sm" id="logout-btn">Sign out</button>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="dashboard-main">
+
+    <!-- Heading -->
+    <div class="dashboard-heading">
+      <h1>My Applications</h1>
+      <button class="btn btn-primary" id="add-btn">+ Add Application</button>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-card stat-total">
+        <div class="stat-label">Total</div>
+        <div class="stat-value" id="stat-total">—</div>
+      </div>
+      <div class="stat-card stat-applied">
+        <div class="stat-label">Applied</div>
+        <div class="stat-value" id="stat-applied">—</div>
+      </div>
+      <div class="stat-card stat-interview">
+        <div class="stat-label">Interview</div>
+        <div class="stat-value" id="stat-interview">—</div>
+      </div>
+      <div class="stat-card stat-offer">
+        <div class="stat-label">Offer</div>
+        <div class="stat-value" id="stat-offer">—</div>
+      </div>
+      <div class="stat-card stat-rejected">
+        <div class="stat-label">Rejected</div>
+        <div class="stat-value" id="stat-rejected">—</div>
+      </div>
+      <div class="stat-card stat-withdrawn">
+        <div class="stat-label">Withdrawn</div>
+        <div class="stat-value" id="stat-withdrawn">—</div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <div class="filter-search">
+        <span class="filter-search-icon">🔍</span>
+        <input
+          type="search"
+          id="search-input"
+          placeholder="Search company or role…"
+          aria-label="Search applications"
+        />
+      </div>
+      <div class="filter-status" role="group" aria-label="Filter by status">
+        <button class="filter-pill active" data-status="">All</button>
+        <button class="filter-pill" data-status="Applied">Applied</button>
+        <button class="filter-pill" data-status="Interview">Interview</button>
+        <button class="filter-pill" data-status="Offer">Offer</button>
+        <button class="filter-pill" data-status="Rejected">Rejected</button>
+        <button class="filter-pill" data-status="Withdrawn">Withdrawn</button>
+      </div>
+    </div>
+
+    <!-- Application list -->
+    <div class="app-list" id="app-list" aria-live="polite"></div>
+
+  </main>
+
+  <!-- Add / Edit modal -->
+  <div class="modal-overlay hidden" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Add Application</h2>
+        <button class="modal-close" id="modal-close-btn" aria-label="Close modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="app-form" novalidate>
+          <input type="hidden" id="app-id" />
+
+          <div class="field">
+            <label for="field-company">Company <span aria-hidden="true">*</span></label>
+            <input
+              type="text"
+              id="field-company"
+              name="company"
+              placeholder="e.g. Acme Corp"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="field-role">Role <span aria-hidden="true">*</span></label>
+            <input
+              type="text"
+              id="field-role"
+              name="role"
+              placeholder="e.g. Software Engineer"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="field-date">Date Applied <span aria-hidden="true">*</span></label>
+            <input
+              type="date"
+              id="field-date"
+              name="date_applied"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="field-status">Status</label>
+            <select id="field-status" name="status">
+              <option value="Applied">Applied</option>
+              <option value="Interview">Interview</option>
+              <option value="Offer">Offer</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Withdrawn">Withdrawn</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="field-url">Job Posting URL</label>
+            <input
+              type="url"
+              id="field-url"
+              name="url"
+              placeholder="https://…"
+            />
+          </div>
+
+          <div class="field">
+            <label for="field-notes">Notes</label>
+            <textarea
+              id="field-notes"
+              name="notes"
+              placeholder="Recruiter contact, interview rounds, salary range…"
+            ></textarea>
+          </div>
+
+          <div id="app-form-error" class="form-error" role="alert" aria-live="polite"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
+        <button class="btn btn-primary" id="modal-save-btn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

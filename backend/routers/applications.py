@@ -1,3 +1,12 @@
+"""
+Application management endpoints.
+
+Handles CRUD operations for job applications with proper validation,
+error handling, and authorization checks.
+"""
+
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +29,8 @@ router = APIRouter(prefix="/applications")
 async def get_stats(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-):
+) -> StatsResponse:
+    """Get statistics of applications by status for the current user."""
     total_result = await db.execute(
         select(func.count()).where(Application.user_id == current_user.id)
     )
@@ -45,13 +55,24 @@ async def list_applications(
     search: str | None = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-):
+) -> list[ApplicationResponse]:
+    """
+    List applications for the current user.
+    
+    Can be filtered by status and/or searched by company name or role.
+    """
     query = select(Application).where(Application.user_id == current_user.id)
 
     if status is not None:
         query = query.where(Application.status == status.value)
 
     if search is not None:
+        search = search.strip()
+        if len(search) > 100:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Search query too long (max 100 characters)"
+            )
         query = query.where(
             or_(
                 Application.company.ilike(f"%{search}%"),
@@ -69,15 +90,41 @@ async def create_application(
     body: ApplicationCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-):
+) -> ApplicationResponse:
+    """
+    Create a new application.
+    
+    Validates that the application date is not in the future and
+    that all required fields are properly formatted.
+    """
+    # Validate date is not in future
+    if body.date_applied > date.today():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Application date cannot be in the future"
+        )
+
+    # Validate required fields are not empty
+    if not body.company or not body.company.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Company name is required"
+        )
+    
+    if not body.role or not body.role.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Job role is required"
+        )
+
     app = Application(
         user_id=current_user.id,
-        company=body.company,
-        role=body.role,
+        company=body.company.strip(),
+        role=body.role.strip(),
         date_applied=body.date_applied,
         status=body.status.value,
-        notes=body.notes,
-        url=body.url,
+        notes=body.notes.strip() if body.notes else None,
+        url=body.url.strip() if body.url else None,
     )
     db.add(app)
     await db.commit()
@@ -91,19 +138,39 @@ async def update_application(
     body: ApplicationUpdate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-):
+) -> ApplicationResponse:
+    """
+    Update an existing application.
+    
+    Only allows updates to applications belonging to the current user.
+    Validates that the updated date is not in the future.
+    """
     result = await db.execute(
         select(Application).where(Application.id == id, Application.user_id == current_user.id)
     )
     app = result.scalar_one_or_none()
     if app is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Application not found"
+        )
+
+    # Validate date if provided
+    if body.date_applied and body.date_applied > date.today():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Application date cannot be in the future"
+        )
 
     updates = body.model_dump(exclude_unset=True)
     if "status" in updates and updates["status"] is not None:
         updates["status"] = updates["status"].value
+    
     for field, value in updates.items():
-        setattr(app, field, value)
+        if value is not None and isinstance(value, str):
+            value = value.strip()
+        if value:  # Only set non-empty values
+            setattr(app, field, value)
 
     await db.commit()
     await db.refresh(app)
@@ -115,13 +182,21 @@ async def delete_application(
     id: int,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-):
+) -> None:
+    """
+    Delete an application.
+    
+    Only allows deletion of applications belonging to the current user.
+    """
     result = await db.execute(
         select(Application).where(Application.id == id, Application.user_id == current_user.id)
     )
     app = result.scalar_one_or_none()
     if app is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Application not found"
+        )
 
     await db.delete(app)
     await db.commit()

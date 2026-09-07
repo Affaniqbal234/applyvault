@@ -40,7 +40,7 @@ async def open_frontend(client, token=None):
                     body=response.content,
                 )
             elif url.netloc == "localhost:5500" and url.path in {
-                "/index.html", "/dashboard.html", "/app.js", "/style.css",
+                "/index.html", "/dashboard.html", "/app.js", "/config.js", "/style.css",
             }:
                 await route.fulfill(path=FRONTEND / url.path.lstrip("/"))
             else:

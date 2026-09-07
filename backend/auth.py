@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -11,13 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from models import User
+from config import settings
 
-JWT_SECRET = os.environ.get("JWT_SECRET")
-if not JWT_SECRET:
-    raise RuntimeError(
-        "JWT_SECRET environment variable is not set. "
-        "Set it to a random secret string before starting."
-    )
+JWT_SECRET = settings.jwt_secret
 
 ALGORITHM = "HS256"
 

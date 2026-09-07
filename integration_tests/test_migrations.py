@@ -14,7 +14,10 @@ BACKEND = Path(__file__).resolve().parents[1] / "backend"
 def run_backend(url, *arguments):
     environment = os.environ.copy()
     environment["DATABASE_URL"] = url
-    environment["JWT_SECRET"] = "disposable-postgres-test-secret"
+    environment["JWT_SECRET"] = "disposable-postgres-test-secret-32-bytes"
+    environment["APP_ENV"] = "development"
+    environment["FRONTEND_ORIGIN"] = "http://localhost:5500"
+    environment["TRUSTED_PROXY_IPS"] = ""
     return subprocess.run(
         [sys.executable, *arguments], cwd=BACKEND, env=environment,
         capture_output=True, text=True, timeout=60,

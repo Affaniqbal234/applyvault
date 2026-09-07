@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 
-_application_modules = {"database", "main", "backend.database", "backend.main"}
+_application_modules = {"database", "main", "config", "backend.database", "backend.main", "backend.config"}
 _loaded_application_modules = _application_modules.intersection(sys.modules)
 if _loaded_application_modules:
     loaded_modules = ", ".join(sorted(_loaded_application_modules))
@@ -22,7 +22,10 @@ TEST_DATABASE_PATH = Path(_test_database_directory.name) / "applyvault.db"
 TEST_DATABASE_URL = f"sqlite+aiosqlite:///{TEST_DATABASE_PATH.as_posix()}"
 
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
-os.environ["JWT_SECRET"] = "test-secret-key-for-pytest"
+os.environ["JWT_SECRET"] = "test-secret-key-for-pytest-only-32-bytes"
+os.environ["APP_ENV"] = "development"
+os.environ["FRONTEND_ORIGIN"] = "http://localhost:5500"
+os.environ["TRUSTED_PROXY_IPS"] = ""
 
 from httpx import ASGITransport, AsyncClient
 
@@ -46,6 +49,7 @@ def cleanup_test_database_directory():
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_database():
+    app.state.auth_limiter.reset()
     previous_override = app.dependency_overrides.get(get_db)
     app.dependency_overrides[get_db] = override_get_db
 

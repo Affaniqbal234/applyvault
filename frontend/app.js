@@ -1,10 +1,25 @@
-// change this to your Render/Railway URL when deploying
-const API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-  ? "http://localhost:8000"
-  : "https://your-app.onrender.com";  // replace with your actual Render URL
+const API = (() => {
+  try {
+    const configured = window.APPLYVAULT_CONFIG?.apiUrl;
+    const url = new URL(configured);
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password
+        || url.pathname !== '/' || url.search || url.hash
+        || (location.protocol === 'https:' && url.protocol !== 'https:')) {
+      throw new Error('Invalid API origin');
+    }
+    return url.origin;
+  } catch {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('button').forEach(button => { button.disabled = true; });
+      showToast('Service configuration is unavailable. Please contact the site owner.', 'error');
+    });
+    return null;
+  }
+})();
 
 // ── Core fetch wrapper ──────────────────────────────────────
 async function api(path, options = {}) {
+  if (!API) return { ok: false, data: null };
   const token = localStorage.getItem("token");
 
   const headers = {
@@ -167,6 +182,7 @@ function showToast(message, type = "error") {
 
 // ── Auth API calls ──────────────────────────────────────────
 async function loginRequest(email, password) {
+  if (!API) return null;
   const errorEl = document.getElementById("login-error");
 
   let response;
@@ -195,6 +211,7 @@ async function loginRequest(email, password) {
 }
 
 async function registerRequest(email, password, errorEl) {
+  if (!API) return null;
   let response;
   try {
     response = await fetch(`${API}/register`, {

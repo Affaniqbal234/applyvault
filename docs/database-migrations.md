@@ -120,7 +120,7 @@ one database per test, and stops its own server during teardown. It never target
 an inherited `DATABASE_URL`, `PGHOST`, or `PGDATA`. Run it as a normal user, not
 root. PostgreSQL refuses to initialize a cluster as root.
 
-Install backend dependencies and PostgreSQL binaries. Set `POSTGRES_BIN` if the
+Install `backend/requirements-dev.txt` and PostgreSQL binaries. Set `POSTGRES_BIN` if the
 binaries are not on `PATH`. Example for Windows PowerShell:
 
 ```powershell

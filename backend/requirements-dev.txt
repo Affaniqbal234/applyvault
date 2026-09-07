@@ -1,0 +1,6 @@
+-r requirements.txt
+httpx==0.28.0
+pytest==9.1.1
+pytest-asyncio==1.4.0
+hypothesis==6.122.3
+aiosqlite==0.20.0

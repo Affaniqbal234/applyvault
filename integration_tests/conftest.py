@@ -50,6 +50,10 @@ def run_cluster(directory):
          "--pwfile", str(password_file), "--encoding=UTF8", "--locale=C"],
         env=environment, check=True, capture_output=True, text=True, timeout=60,
     )
+    # Every test client uses loopback TCP. Linux packages may default Unix
+    # sockets to a system directory the test runner cannot write to.
+    with (data / "postgresql.conf").open("a", encoding="utf-8") as configuration:
+        configuration.write("\nunix_socket_directories = ''\n")
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]

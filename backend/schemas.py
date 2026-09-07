@@ -77,6 +77,10 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class CurrentUserResponse(BaseModel):
+    email: EmailStr
+
+
 class ApplicationCreate(BaseModel):
     company: RequiredApplicationText
     role: RequiredApplicationText

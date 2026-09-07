@@ -18,13 +18,13 @@ async function api(path, options = {}) {
     response = await fetch(`${API}${path}`, { ...options, headers });
   } catch {
     showToast("Could not reach server", "error");
-    return null;
+    return { ok: false, data: null };
   }
 
   if (response.status === 401) {
     localStorage.removeItem("token");
     window.location.href = "index.html";
-    return null;
+    return { ok: false, data: null };
   }
 
   if (!response.ok) {
@@ -38,15 +38,16 @@ async function api(path, options = {}) {
       }
     } catch { /* non-JSON error body */ }
     showToast(detail, "error");
-    return null;
+    return { ok: false, data: null };
   }
 
-  if (response.status === 204) return null;
+  if (response.status === 204) return { ok: true, data: null };
 
   try {
-    return await response.json();
+    return { ok: true, data: await response.json() };
   } catch {
-    return null;
+    showToast("Server returned an invalid response", "error");
+    return { ok: false, data: null };
   }
 }
 
@@ -223,6 +224,7 @@ async function registerRequest(email, password, errorEl) {
 
 const dashboardState = { status: null, search: "" };
 let debounceTimer = null;
+let applicationsRequestId = 0;
 
 function initDashboard() {
   if (!document.getElementById("app-list")) return;
@@ -233,13 +235,7 @@ function initDashboard() {
     return;
   }
 
-  // Display user email decoded from JWT payload
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    const emailEl = document.getElementById("user-email");
-    if (emailEl && payload.sub) emailEl.textContent = payload.sub;
-  } catch { /* ignore decode errors */ }
-
+  loadAuthenticatedUser();
   loadStats();
   loadApplications();
 
@@ -288,9 +284,18 @@ function initDashboard() {
   });
 }
 
+async function loadAuthenticatedUser() {
+  const result = await api("/me");
+  if (!result.ok || typeof result.data?.email !== "string") return;
+
+  const emailEl = document.getElementById("user-email");
+  if (emailEl) emailEl.textContent = result.data.email;
+}
+
 async function loadStats() {
-  const data = await api("/applications/stats");
-  if (!data) return;
+  const result = await api("/applications/stats");
+  if (!result.ok) return;
+  const data = result.data;
 
   document.getElementById("stat-total").textContent = data.total ?? 0;
   document.getElementById("stat-applied").textContent = data.by_status?.Applied ?? 0;
@@ -301,16 +306,20 @@ async function loadStats() {
 }
 
 async function loadApplications(filters = {}) {
+  const requestId = ++applicationsRequestId;
   const params = new URLSearchParams();
   if (filters.status) params.set("status", filters.status);
   if (filters.search) params.set("search", filters.search);
 
   const query = params.toString() ? `?${params}` : "";
-  const data = await api(`/applications${query}`);
-  const list = document.getElementById("app-list");
-  if (!list) return;
+  const result = await api(`/applications${query}`);
+  if (requestId !== applicationsRequestId) return;
 
-  if (!data || data.length === 0) {
+  const list = document.getElementById("app-list");
+  if (!list || !result.ok) return;
+  const data = result.data;
+
+  if (data.length === 0) {
     list.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">📋</div>
@@ -444,7 +453,7 @@ async function handleFormSubmit() {
   saveBtn.disabled = false;
   saveBtn.textContent = "Save";
 
-  if (result !== null) {
+  if (result.ok) {
     closeModal();
     await Promise.all([loadStats(), loadApplications(dashboardState)]);
     showToast(id ? "Application updated." : "Application added.", "success");
@@ -454,36 +463,8 @@ async function handleFormSubmit() {
 async function deleteApplication(id) {
   if (!confirm("Delete this application? This cannot be undone.")) return;
 
-  const token = localStorage.getItem("token");
-  let ok = false;
-
-  try {
-    const response = await fetch(`${API}/applications/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (response.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "index.html";
-      return;
-    }
-
-    if (response.status === 204) {
-      ok = true;
-    } else {
-      let detail = `Delete failed (${response.status})`;
-      try {
-        const body = await response.json();
-        if (body.detail) detail = typeof body.detail === "string" ? body.detail : detail;
-      } catch { /* non-JSON */ }
-      showToast(detail, "error");
-    }
-  } catch {
-    showToast("Could not reach server", "error");
-  }
-
-  if (ok) {
+  const result = await api(`/applications/${id}`, { method: "DELETE" });
+  if (result.ok) {
     await Promise.all([loadStats(), loadApplications(dashboardState)]);
     showToast("Application deleted.", "success");
   }

@@ -4,12 +4,19 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
-from auth import create_access_token, hash_password, verify_password
+from auth import create_access_token, get_current_user, hash_password, verify_password
 from database import get_db
 from models import User
-from schemas import TokenResponse, UserCreate
+from schemas import CurrentUserResponse, TokenResponse, UserCreate
 
 router = APIRouter()
+
+
+@router.get("/me", response_model=CurrentUserResponse)
+async def get_authenticated_user(
+    current_user: User = Depends(get_current_user),
+) -> CurrentUserResponse:
+    return CurrentUserResponse(email=current_user.email)
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)

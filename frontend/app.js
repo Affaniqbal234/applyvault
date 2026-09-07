@@ -59,10 +59,12 @@ function showToast(message, type = "error") {
 
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
-  toast.innerHTML = `
-    <span class="toast-icon">${icons[type] ?? "ℹ"}</span>
-    <span>${message}</span>
-  `;
+  const icon = document.createElement("span");
+  icon.className = "toast-icon";
+  icon.textContent = icons[type] ?? "ℹ";
+  const text = document.createElement("span");
+  text.textContent = message;
+  toast.append(icon, text);
 
   container.appendChild(toast);
 
@@ -319,16 +321,19 @@ async function loadApplications(filters = {}) {
     return;
   }
 
-  list.innerHTML = data.map(app => `
-    <div class="app-card" data-id="${app.id}">
+  list.replaceChildren(...data.map(app => {
+    const card = document.createElement("div");
+    card.className = "app-card";
+    card.dataset.id = app.id;
+    card.innerHTML = `
       <div class="app-card-header">
         <div>
           <div class="app-card-company">${escapeHtml(app.company)}</div>
           <div class="app-card-role">${escapeHtml(app.role)}</div>
         </div>
         <div class="app-card-actions">
-          <button class="btn btn-ghost btn-sm" onclick="openModal(${JSON.stringify(app).replace(/"/g, '&quot;')})">Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteApplication(${app.id})">Delete</button>
+          <button class="btn btn-ghost btn-sm" data-action="edit">Edit</button>
+          <button class="btn btn-danger btn-sm" data-action="delete">Delete</button>
         </div>
       </div>
       <div class="app-card-meta">
@@ -336,9 +341,33 @@ async function loadApplications(filters = {}) {
         <span class="app-card-date">${formatDate(app.date_applied)}</span>
       </div>
       ${app.notes ? `<div class="app-card-notes">${escapeHtml(app.notes)}</div>` : ""}
-      ${app.url ? `<a class="app-card-url" href="${escapeHtml(app.url)}" target="_blank" rel="noopener noreferrer">↗ View posting</a>` : ""}
-    </div>
-  `).join("");
+    `;
+    card.querySelector('[data-action="edit"]').addEventListener("click", () => openModal(app));
+    card.querySelector('[data-action="delete"]').addEventListener("click", () => deleteApplication(app.id));
+
+    // Older records can contain URLs that predate server-side validation.
+    const url = safePostingUrl(app.url);
+    if (url) {
+      const link = document.createElement("a");
+      link.className = "app-card-url";
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "↗ View posting";
+      card.appendChild(link);
+    }
+    return card;
+  }));
+}
+
+function safePostingUrl(value) {
+  if (typeof value !== "string" || !/^https?:\/\//i.test(value.trim())) return null;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "http:" || url.protocol === "https:" ? url.href : null;
+  } catch {
+    return null;
+  }
 }
 
 function openModal(app = null) {
@@ -388,6 +417,10 @@ async function handleFormSubmit() {
   if (!company) { errorEl.textContent = "Company is required."; return; }
   if (!role) { errorEl.textContent = "Role is required."; return; }
   if (!date_applied) { errorEl.textContent = "Date applied is required."; return; }
+  if (url && !safePostingUrl(url)) {
+    errorEl.textContent = "Job posting URL must be an absolute HTTP or HTTPS URL.";
+    return;
+  }
 
   const saveBtn = document.getElementById("modal-save-btn");
   saveBtn.disabled = true;

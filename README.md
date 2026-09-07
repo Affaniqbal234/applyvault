@@ -115,6 +115,22 @@ cd backend
 pytest tests/ -v
 ```
 
+Browser security tests run the frontend in headless Chromium and route API requests
+through the real backend using the same isolated SQLite test setup. They cover
+stored text, error messages, Edit/Delete actions, and posting URL safety.
+
+From `backend/` with Python 3.12:
+
+```bash
+python -m pip install -r requirements-browser.txt
+python -m playwright install chromium
+python -m pytest browser_tests/ -v
+```
+
+On Linux, use `python -m playwright install --with-deps chromium` to install the
+browser's system dependencies too. CI runs both test suites and the JavaScript
+syntax check.
+
 ---
 
 ## What I'd add with more time

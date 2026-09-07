@@ -1,7 +1,20 @@
 from datetime import date, datetime
 from enum import Enum
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field, HttpUrl
+
+
+def validate_posting_url(value: str) -> str:
+    value = value.strip()
+    if value:
+        if not value.lower().startswith(("http://", "https://")):
+            raise ValueError("Job posting URL must be an absolute HTTP or HTTPS URL")
+        HttpUrl(value)
+    return value
+
+
+PostingURL = Annotated[str, AfterValidator(validate_posting_url)]
 
 
 class StatusEnum(str, Enum):
@@ -28,7 +41,7 @@ class ApplicationCreate(BaseModel):
     date_applied: date
     status: StatusEnum = StatusEnum.applied
     notes: str | None = None
-    url: str | None = None
+    url: PostingURL | None = None
 
 
 class ApplicationUpdate(BaseModel):
@@ -37,7 +50,7 @@ class ApplicationUpdate(BaseModel):
     date_applied: date | None = None
     status: StatusEnum | None = None
     notes: str | None = None
-    url: str | None = None
+    url: PostingURL | None = None
 
 
 class ApplicationResponse(BaseModel):

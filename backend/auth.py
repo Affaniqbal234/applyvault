@@ -43,18 +43,41 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
 ) -> User:
     try:
-        payload = pyjwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        payload = pyjwt.decode(
+            token, JWT_SECRET, algorithms=[ALGORITHM], options={"require": ["exp", "sub"]}
+        )
+        subject = payload["sub"]
+        if (
+            not isinstance(subject, str)
+            or not subject.isascii()
+            or not subject.isdecimal()
+            or len(subject) > 10
+        ):
+            raise InvalidTokenError("Invalid subject")
+        user_id = int(subject)
+        # User.id is a PostgreSQL INTEGER; reject overflow before querying it.
+        if not 1 <= user_id <= 2_147_483_647:
+            raise InvalidTokenError("Invalid subject")
     except ExpiredSignatureError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
-    except InvalidTokenError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from None
+    except (InvalidTokenError, TypeError, ValueError, OverflowError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from None
 
-    result = await db.execute(select(User).where(User.id == int(user_id)))
+    result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     return user

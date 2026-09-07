@@ -64,6 +64,13 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
 
+    @field_validator("password")
+    @classmethod
+    def password_fits_bcrypt(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("Password cannot exceed 72 UTF-8 bytes")
+        return value
+
 
 class TokenResponse(BaseModel):
     access_token: str

@@ -86,11 +86,20 @@ FRONTEND_ORIGIN=http://localhost:5500
 
 > `postgres` is the default PostgreSQL username — created automatically when PostgreSQL is installed. The password is what you set during installation. Create the database first with `createdb applyvault` or through pgAdmin.
 
-**5. Start the API**
+**5. Migrate the database and start the API**
+
+For a new, empty database, start from the repository root:
+
 ```bash
 cd backend
+python -m alembic upgrade head
 uvicorn main:app --reload
 ```
+
+Startup does not create or alter tables. Run migrations once before starting the
+API or releasing a new version. If the database already has ApplyVault tables,
+follow the [existing database adoption procedure](docs/database-migrations.md)
+before running `upgrade`.
 
 **6. Serve the frontend**
 
@@ -108,7 +117,8 @@ Then open `http://localhost:5500/index.html` in your browser.
 
 ## Tests
 
-Tests use SQLite so no Postgres setup needed.
+The backend and browser suites use isolated SQLite databases and need no
+PostgreSQL setup.
 
 ```bash
 cd backend
@@ -128,8 +138,22 @@ python -m pytest browser_tests/ -v
 ```
 
 On Linux, use `python -m playwright install --with-deps chromium` to install the
-browser's system dependencies too. CI runs both test suites and the JavaScript
-syntax check.
+browser's system dependencies too.
+
+PostgreSQL integration checks run separately. They create a disposable cluster,
+apply migrations, verify database constraints, and exercise existing-database
+adoption. Install PostgreSQL binaries and add their `bin` directory to `PATH`, or
+set `POSTGRES_BIN` to that directory. From the repository root:
+
+```bash
+python -m pytest integration_tests/ -q
+```
+
+The tests never use `DATABASE_URL` to choose a server. Missing PostgreSQL binaries
+fail the checks rather than silently skipping them. CI runs these checks on
+PostgreSQL 16 and Python 3.12 alongside the SQLite suites and JavaScript syntax
+check. See [migration operations and adoption](docs/database-migrations.md) for
+details.
 
 ---
 

@@ -49,6 +49,34 @@ jobs:
       - name: Check JavaScript syntax
         run: node --check frontend/app.js
 
+  postgres-integration:
+    name: PostgreSQL migrations and constraints
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      POSTGRES_BIN: /usr/lib/postgresql/16/bin
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install PostgreSQL binaries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-16
+
+      - name: Install backend dependencies
+        run: python -m pip install -r backend/requirements.txt
+
+      - name: Run checks in a test-owned PostgreSQL cluster
+        run: python -m pytest integration_tests/ -q
+
   browser-tests:
     name: Browser rendering security
     runs-on: ubuntu-latest

@@ -10,13 +10,17 @@
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white" alt="Python 3.12"></a>
   <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI"></a>
   <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-4169e1?logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
+  <a href="https://www.sqlalchemy.org/"><img src="https://img.shields.io/badge/SQLAlchemy-D71F00?logo=sqlalchemy&logoColor=white" alt="SQLAlchemy"></a>
+  <a href="https://alembic.sqlalchemy.org/"><img src="https://img.shields.io/badge/Alembic-6BA81E" alt="Alembic"></a>
+  <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript"><img src="https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black" alt="JavaScript"></a>
+  <a href="https://playwright.dev/python/"><img src="https://img.shields.io/badge/Playwright-2EAD33" alt="Playwright"></a>
   <a href="https://github.com/Affaniqbal234/applyvault/actions/workflows/ci.yml"><img src="https://github.com/Affaniqbal234/applyvault/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status on main"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green" alt="MIT License"></a>
 </p>
 
-<p align="center">
-  <a href="https://applyvault.vercel.app"><strong>Live Demo</strong></a>
-</p>
+## Live Demo
+
+**[Open ApplyVault →](https://applyvault.vercel.app)**
 
 ![ApplyVault dashboard showing application status counts, search, filters, and application cards](assets/applyvault-dashboard.png)
 
@@ -113,7 +117,7 @@ python -m alembic upgrade head
 uvicorn main:app --reload
 ```
 
-Startup does not change the schema. Run migrations before starting the API or
+The API does not change the schema at startup. Run migrations before starting it or
 releasing a new version. If the database already contains ApplyVault tables,
 follow the [database adoption procedure](docs/database-migrations.md) first.
 
@@ -134,8 +138,8 @@ See [deployment configuration](docs/deployment.md) for hosting settings.
 
 ## Tests
 
-The backend and browser suites use isolated SQLite databases and need no
-PostgreSQL setup. With the virtual environment active, start from the repository root:
+Backend/API and browser tests use isolated SQLite databases. With the virtual
+environment active, run the backend suite from the repository root:
 
 ```bash
 cd backend
@@ -143,8 +147,7 @@ python -m pip install -r requirements-dev.txt
 python -m pytest tests/ -v
 ```
 
-Browser tests cover rendering safety, API configuration, and request state using
-headless Chromium and the backend. From the same `backend/` directory:
+Run the Playwright browser suite with headless Chromium from the same `backend/` directory:
 
 ```bash
 python -m pip install -r requirements-browser.txt
@@ -155,16 +158,16 @@ python -m pytest browser_tests/ -v
 On Linux, use `python -m playwright install --with-deps chromium` to install the
 browser's system dependencies too.
 
-PostgreSQL integration tests cover migrations, database constraints, existing
-database adoption, and persistence after an API restart. They create a disposable
-cluster and never target your configured `DATABASE_URL`. Install PostgreSQL
-binaries and add their `bin` directory to `PATH`, or set `POSTGRES_BIN` to that
-directory. From the repository root:
+PostgreSQL integration tests cover migrations, constraints, existing database
+adoption, and persistence after an API restart. They create a disposable cluster
+and ignore your configured `DATABASE_URL`. Install PostgreSQL binaries and add
+their `bin` directory to `PATH`, or set `POSTGRES_BIN` to that directory. Run as a
+non-root user from the repository root:
 
 ```bash
 python -m pytest integration_tests/ -q
 ```
 
-Missing PostgreSQL binaries fail the integration tests. [GitHub Actions](https://github.com/Affaniqbal234/applyvault/actions/workflows/ci.yml)
-runs all three suites, JavaScript syntax checks, and a production dependency audit.
-CI uses Python 3.12 and PostgreSQL 16.
+[GitHub Actions CI](https://github.com/Affaniqbal234/applyvault/actions/workflows/ci.yml)
+runs all three suites, JavaScript syntax checks, and a production dependency audit
+with Python 3.12 and PostgreSQL 16.

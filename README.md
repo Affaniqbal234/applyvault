@@ -7,18 +7,18 @@
 <p align="center">A job application tracker built to stop losing track of where you applied.</p>
 
 <p align="center">
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white" alt="Python"></a>
-  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-0.141-009688?logo=fastapi&logoColor=white" alt="FastAPI"></a>
-  <img src="https://img.shields.io/badge/JavaScript-ES6+-f7df1e?logo=javascript&logoColor=black" alt="JavaScript">
-  <img src="https://img.shields.io/badge/HTML5-orange?logo=html5&logoColor=white" alt="HTML5">
-  <img src="https://img.shields.io/badge/CSS3-blue?logo=css3&logoColor=white" alt="CSS3">
-  <a href="https://github.com/Affaniqbal234/applyvault"><img src="https://img.shields.io/badge/github-repo-181717?logo=github" alt="GitHub"></a>
-  <a href="https://github.com/Affaniqbal234/applyvault/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green" alt="License"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white" alt="Python 3.12"></a>
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI"></a>
+  <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-4169e1?logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
+  <a href="https://github.com/Affaniqbal234/applyvault/actions/workflows/ci.yml"><img src="https://github.com/Affaniqbal234/applyvault/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status on main"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green" alt="MIT License"></a>
 </p>
 
-<br/>
+<p align="center">
+  <a href="https://applyvault.vercel.app"><strong>Live Demo</strong></a>
+</p>
 
-> **Live demo:** not deployed. See the [deployment configuration and rehearsal](docs/deployment.md).
+![ApplyVault dashboard showing application status counts, search, filters, and application cards](assets/applyvault-dashboard.png)
 
 ---
 
@@ -27,12 +27,12 @@
 - Backend: FastAPI, async SQLAlchemy, PostgreSQL
 - Auth: JWT (PyJWT), bcrypt
 - Frontend: vanilla HTML/CSS/JS
-- Tests: pytest, httpx
+- Tests: pytest, httpx, Playwright
 
 ## Features
 
 - Register and log in with JWT sessions
-- Track applications — company, role, status, date applied, notes, job posting link
+- Track company, role, status, date applied, notes, and job posting links
 - Update status as things progress (Applied, Interview, Offer, Rejected, Withdrawn)
 - Search by company or role, filter by status
 - Dashboard with live counts per status
@@ -44,42 +44,54 @@
 Requires Python 3.12 (latest security patch) and PostgreSQL.
 
 **1. Clone the repo**
+
 ```bash
 git clone https://github.com/Affaniqbal234/applyvault.git
 cd applyvault
 ```
 
 **2. Create and activate a virtual environment**
-```bash
-# Windows
+
+Windows Command Prompt:
+
+```bat
 python -m venv .venv
 .venv\Scripts\activate
+```
 
-# macOS / Linux
+macOS / Linux:
+
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
 **3. Install dependencies**
+
+From the repository root:
+
 ```bash
-cd backend
-pip install -r requirements.txt
+python -m pip install -r backend/requirements.txt
 ```
 
 **4. Set up environment variables**
 
-From the `applyvault/` root folder:
-```bash
-# Windows
-copy .env.example .env
+Copy the template from the repository root:
 
+```bat
+:: Windows Command Prompt
+copy .env.example .env
+```
+
+```bash
 # macOS / Linux
 cp .env.example .env
 ```
 
 Open `.env` and fill in your values:
-```
-DATABASE_URL=postgresql+asyncpg://postgres:yourpassword@localhost:5432/applyvault
+
+```dotenv
+DATABASE_URL=postgresql+asyncpg://<user>:<password>@localhost:5432/applyvault
 APP_ENV=development
 JWT_SECRET=<paste-a-generated-secret-here>
 FRONTEND_ORIGIN=http://localhost:5500
@@ -88,11 +100,12 @@ FRONTEND_ORIGIN=http://localhost:5500
 Generate `JWT_SECRET` with `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
 Secrets must contain at least 32 bytes. Keep `.env` outside Git.
 
-> `postgres` is the default PostgreSQL username — created automatically when PostgreSQL is installed. The password is what you set during installation. Create the database first with `createdb applyvault` or through pgAdmin.
+Use your local PostgreSQL credentials. Create an empty database named `applyvault`
+in pgAdmin or with `createdb -U <user> applyvault`.
 
 **5. Migrate the database and start the API**
 
-For a new, empty database, start from the repository root:
+From the repository root:
 
 ```bash
 cd backend
@@ -100,14 +113,14 @@ python -m alembic upgrade head
 uvicorn main:app --reload
 ```
 
-Startup does not create or alter tables. Run migrations once before starting the
-API or releasing a new version. If the database already has ApplyVault tables,
-follow the [existing database adoption procedure](docs/database-migrations.md)
-before running `upgrade`.
+Startup does not change the schema. Run migrations before starting the API or
+releasing a new version. If the database already contains ApplyVault tables,
+follow the [database adoption procedure](docs/database-migrations.md) first.
 
 **6. Serve the frontend**
 
-In a second terminal:
+In a second terminal, from the repository root:
+
 ```bash
 cd frontend
 python -m http.server 5500
@@ -115,26 +128,23 @@ python -m http.server 5500
 
 Then open `http://localhost:5500/index.html` in your browser.
 
-> If you're using VS Code, right-click `index.html` → "Open with Live Server" instead.
+See [deployment configuration](docs/deployment.md) for hosting settings.
 
 ---
 
 ## Tests
 
 The backend and browser suites use isolated SQLite databases and need no
-PostgreSQL setup.
+PostgreSQL setup. With the virtual environment active, start from the repository root:
 
 ```bash
 cd backend
 python -m pip install -r requirements-dev.txt
-pytest tests/ -v
+python -m pytest tests/ -v
 ```
 
-Browser security tests run the frontend in headless Chromium and route API requests
-through the real backend using the same isolated SQLite test setup. They cover
-stored text, error messages, Edit/Delete actions, and posting URL safety.
-
-From `backend/` with Python 3.12:
+Browser tests cover rendering safety, API configuration, and request state using
+headless Chromium and the backend. From the same `backend/` directory:
 
 ```bash
 python -m pip install -r requirements-browser.txt
@@ -145,26 +155,16 @@ python -m pytest browser_tests/ -v
 On Linux, use `python -m playwright install --with-deps chromium` to install the
 browser's system dependencies too.
 
-PostgreSQL integration checks run separately. They create a disposable cluster,
-apply migrations, verify database constraints, and exercise existing-database
-adoption. Install PostgreSQL binaries and add their `bin` directory to `PATH`, or
-set `POSTGRES_BIN` to that directory. From the repository root:
+PostgreSQL integration tests cover migrations, database constraints, existing
+database adoption, and persistence after an API restart. They create a disposable
+cluster and never target your configured `DATABASE_URL`. Install PostgreSQL
+binaries and add their `bin` directory to `PATH`, or set `POSTGRES_BIN` to that
+directory. From the repository root:
 
 ```bash
 python -m pytest integration_tests/ -q
 ```
 
-The tests never use `DATABASE_URL` to choose a server. Missing PostgreSQL binaries
-fail the checks rather than silently skipping them. CI runs these checks on
-PostgreSQL 16 and Python 3.12 alongside the SQLite suites and JavaScript syntax
-check. See [migration operations and adoption](docs/database-migrations.md) for
-details.
-
----
-
-## What I'd add with more time
-
-- Deploy with a live URL
-- Email nudges for applications sitting in "Applied" for 2+ weeks
-- CSV export
-- Dark/light theme toggle
+Missing PostgreSQL binaries fail the integration tests. [GitHub Actions](https://github.com/Affaniqbal234/applyvault/actions/workflows/ci.yml)
+runs all three suites, JavaScript syntax checks, and a production dependency audit.
+CI uses Python 3.12 and PostgreSQL 16.
